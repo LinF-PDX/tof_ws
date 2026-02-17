@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: tof-ground-seg
+Version: 0.0.1
+Summary: ToF ground segmentation into grid cells with per-cell plane normals.
+Maintainer: you
+Maintainer-email: you@todo.com
+License: Apache-2.0

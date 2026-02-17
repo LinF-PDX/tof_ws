@@ -1,0 +1,9 @@
+source;share/tof_ground_seg/hook/pythonpath.ps1
+source;share/tof_ground_seg/hook/pythonpath.dsv
+source;share/tof_ground_seg/hook/pythonpath.sh
+source;share/tof_ground_seg/hook/ament_prefix_path.ps1
+source;share/tof_ground_seg/hook/ament_prefix_path.dsv
+source;share/tof_ground_seg/hook/ament_prefix_path.sh
+source;../../build/tof_ground_seg/share/tof_ground_seg/hook/pythonpath_develop.ps1
+source;../../build/tof_ground_seg/share/tof_ground_seg/hook/pythonpath_develop.dsv
+source;../../build/tof_ground_seg/share/tof_ground_seg/hook/pythonpath_develop.sh

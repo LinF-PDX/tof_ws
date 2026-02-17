@@ -1,0 +1,17 @@
+running develop
+/usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+  self.local_index = Environment(self.shadow_path + sys.path)
+running egg_info
+writing tof_ground_seg.egg-info/PKG-INFO
+writing dependency_links to tof_ground_seg.egg-info/dependency_links.txt
+writing entry points to tof_ground_seg.egg-info/entry_points.txt
+writing requirements to tof_ground_seg.egg-info/requires.txt
+writing top-level names to tof_ground_seg.egg-info/top_level.txt
+reading manifest file 'tof_ground_seg.egg-info/SOURCES.txt'
+writing manifest file 'tof_ground_seg.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof-ground-seg.egg-link (link to .)
+Installing grid_ground script to /home/linfu/tof_ws/install/tof_ground_seg/lib/tof_ground_seg
+
+Installed /home/linfu/tof_ws/build/tof_ground_seg
+running symlink_data

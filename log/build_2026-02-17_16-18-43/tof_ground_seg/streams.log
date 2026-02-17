@@ -1,0 +1,19 @@
+[0.376s] Invoking command in '/home/linfu/tof_ws/build/tof_ground_seg': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/linfu/tof_ws/build/tof_ground_seg/build --no-deps symlink_data
+[0.518s] running develop
+[0.580s] /usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+[0.580s]   self.local_index = Environment(self.shadow_path + sys.path)
+[0.592s] running egg_info
+[0.599s] writing tof_ground_seg.egg-info/PKG-INFO
+[0.599s] writing dependency_links to tof_ground_seg.egg-info/dependency_links.txt
+[0.599s] writing entry points to tof_ground_seg.egg-info/entry_points.txt
+[0.599s] writing requirements to tof_ground_seg.egg-info/requires.txt
+[0.599s] writing top-level names to tof_ground_seg.egg-info/top_level.txt
+[0.614s] reading manifest file 'tof_ground_seg.egg-info/SOURCES.txt'
+[0.614s] writing manifest file 'tof_ground_seg.egg-info/SOURCES.txt'
+[0.622s] running build_ext
+[0.622s] Creating /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof-ground-seg.egg-link (link to .)
+[0.622s] Installing grid_ground script to /home/linfu/tof_ws/install/tof_ground_seg/lib/tof_ground_seg
+[0.622s] 
+[0.623s] Installed /home/linfu/tof_ws/build/tof_ground_seg
+[0.623s] running symlink_data
+[0.638s] Invoked command in '/home/linfu/tof_ws/build/tof_ground_seg' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/linfu/tof_ws/build/tof_ground_seg/build --no-deps symlink_data

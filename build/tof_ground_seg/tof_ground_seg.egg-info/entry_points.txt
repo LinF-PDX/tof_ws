@@ -1,0 +1,2 @@
+[console_scripts]
+grid_ground = tof_ground_seg.grid_ground_node:main
