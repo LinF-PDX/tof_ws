@@ -9,6 +9,8 @@ from rclpy._rclpy_pybind11 import RCLError
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Point
 
 from sensor_msgs_py import point_cloud2
 
@@ -135,6 +137,41 @@ def _fit_plane_pca_robust(points: np.ndarray,
     return c0, n0, inlier_ratio
 
 
+def make_normal_marker_array(header: Header, out: np.ndarray, length: float) -> MarkerArray:
+    """
+    out: Nx7 array [x,y,z,nx,ny,nz,confidence]
+    """
+    ma = MarkerArray()
+    for i in range(out.shape[0]):
+        x, y, z, nx, ny, nz, conf = out[i].tolist()
+
+        m = Marker()
+        m.header = header
+        m.ns = "ground_normals"
+        m.id = int(i)
+        m.type = Marker.ARROW
+        m.action = Marker.ADD
+
+        p0 = Point(x=float(x), y=float(y), z=float(z))
+        p1 = Point(x=float(x + length * nx), y=float(y + length * ny), z=float(z + length * nz))
+        m.points = [p0, p1]
+
+        # Arrow size: shaft diameter, head diameter, head length
+        m.scale.x = 0.01
+        m.scale.y = 0.02
+        m.scale.z = 0.03
+
+        # Color (green)
+        m.color.r = 0.0
+        m.color.g = 1.0
+        m.color.b = 0.0
+        m.color.a = 1.0
+
+        ma.markers.append(m)
+
+    return ma
+
+
 class GridGroundNode(Node):
     def __init__(self):
         super().__init__("tof_grid_ground")
@@ -163,6 +200,13 @@ class GridGroundNode(Node):
 
         self.sub = self.create_subscription(PointCloud2, self.points_topic, self.cb_points, 10)
         self.pub = self.create_publisher(PointCloud2, self.output_topic, 10)
+
+        # Normal marker publishing
+        self.declare_parameter("publish_normals_markers", True)
+        self.declare_parameter("normal_length", 0.10)   # arrow length in meters
+        self.declare_parameter("normal_topic", "/ground_grid_normals")
+
+        self.pub_normals = self.create_publisher(MarkerArray, self.get_parameter("normal_topic").value, 10)
 
         self.get_logger().info(f"Listening: {self.points_topic}")
         self.get_logger().info(f"Publishing grid cells: {self.output_topic}")
@@ -318,7 +362,7 @@ class GridGroundNode(Node):
             fit_ok += 1
             total_inlier += inlier_ratio
 
-            if prefer_pos_z and normal[2] < 0:
+            if normal[0] > 0:
                 normal = -normal
 
             # cell center (y,z) in this frame
@@ -357,6 +401,11 @@ class GridGroundNode(Node):
         pc2 = _make_pc2(header, out)
         self.get_logger().info(f"publish: ground_grid_cells N={out.shape[0]}", throttle_duration_sec=1.0)
         self.pub.publish(pc2)
+
+        if bool(self.get_parameter("publish_normals_markers").value):
+            length = float(self.get_parameter("normal_length").value)
+            ma = make_normal_marker_array(header, out, length)
+            self.pub_normals.publish(ma)
 
 
 def main():
