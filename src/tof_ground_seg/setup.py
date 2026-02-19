@@ -19,7 +19,8 @@ setup(
     entry_points={
         'console_scripts': [
             'grid_ground = tof_ground_seg.grid_ground_node:main',
+            'timing_hist = tof_ground_seg.timing_histogram_from_logs:main',
+            'timing_hist_txt = tof_ground_seg.plot_timing_txt:main',
         ],
     },
 )
-
