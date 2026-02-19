@@ -15,6 +15,27 @@ from geometry_msgs.msg import Point
 from sensor_msgs_py import point_cloud2
 
 
+class UnionFind:
+    def __init__(self, n: int):
+        self.parent = np.arange(n, dtype=np.int32)
+        self.size = np.ones(n, dtype=np.int32)
+
+    def find(self, a: int) -> int:
+        while self.parent[a] != a:
+            self.parent[a] = self.parent[self.parent[a]]
+            a = self.parent[a]
+        return a
+
+    def union(self, a: int, b: int):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return
+        if self.size[ra] < self.size[rb]:
+            ra, rb = rb, ra
+        self.parent[rb] = ra
+        self.size[ra] += self.size[rb]
+
+
 @dataclass
 class CellResult:
     center_xyz: np.ndarray  # (3,)
@@ -137,17 +158,19 @@ def _fit_plane_pca_robust(points: np.ndarray,
     return c0, n0, inlier_ratio
 
 
-def make_normal_marker_array(header: Header, out: np.ndarray, length: float) -> MarkerArray:
+def make_normal_marker_array(header: Header, out: np.ndarray, length: float,
+                             ns: str, rgba: Tuple[float, float, float, float]) -> MarkerArray:
     """
     out: Nx7 array [x,y,z,nx,ny,nz,confidence]
     """
     ma = MarkerArray()
+    r, g, b, a = rgba
     for i in range(out.shape[0]):
         x, y, z, nx, ny, nz, conf = out[i].tolist()
 
         m = Marker()
         m.header = header
-        m.ns = "ground_normals"
+        m.ns = ns
         m.id = int(i)
         m.type = Marker.ARROW
         m.action = Marker.ADD
@@ -161,11 +184,10 @@ def make_normal_marker_array(header: Header, out: np.ndarray, length: float) -> 
         m.scale.y = 0.02
         m.scale.z = 0.03
 
-        # Color (green)
-        m.color.r = 0.0
-        m.color.g = 1.0
-        m.color.b = 0.0
-        m.color.a = 1.0
+        m.color.r = float(r)
+        m.color.g = float(g)
+        m.color.b = float(b)
+        m.color.a = float(a)
 
         ma.markers.append(m)
 
@@ -179,7 +201,8 @@ class GridGroundNode(Node):
 
         # Topics (from your bag)
         self.declare_parameter("points_topic", "/camera/depth/points")
-        self.declare_parameter("output_topic", "/ground_grid_cells")
+        self.declare_parameter("ground_topic", "/ground_grid_cells")
+        self.declare_parameter("nonground_topic", "/nonground_grid_cells")
 
         # Grid + fitting parameters
         self.declare_parameter("cell_size", 0.10)         # meters
@@ -188,6 +211,8 @@ class GridGroundNode(Node):
         self.declare_parameter("max_range", 6.0)          # meters; drop far points
         self.declare_parameter("min_range", 0.10)         # meters; drop too-close junk
         self.declare_parameter("prefer_normal_positive_z", True)
+        self.declare_parameter("d_max", 0.15)
+        self.declare_parameter("use_8_neighbors", True)
 
         # If you want a bounded ROI (recommended for speed)
         self.declare_parameter("x_min", -2.0)
@@ -196,20 +221,29 @@ class GridGroundNode(Node):
         self.declare_parameter("y_max",  2.0)
 
         self.points_topic = self.get_parameter("points_topic").get_parameter_value().string_value
-        self.output_topic = self.get_parameter("output_topic").get_parameter_value().string_value
+        self.ground_topic = self.get_parameter("ground_topic").value
+        self.nonground_topic = self.get_parameter("nonground_topic").value
 
         self.sub = self.create_subscription(PointCloud2, self.points_topic, self.cb_points, 10)
-        self.pub = self.create_publisher(PointCloud2, self.output_topic, 10)
+        self.pub_ground = self.create_publisher(PointCloud2, self.ground_topic, 10)
+        self.pub_nonground = self.create_publisher(PointCloud2, self.nonground_topic, 10)
 
         # Normal marker publishing
         self.declare_parameter("publish_normals_markers", True)
         self.declare_parameter("normal_length", 0.10)   # arrow length in meters
-        self.declare_parameter("normal_topic", "/ground_grid_normals")
+        self.declare_parameter("ground_normals_topic", "/ground_normals")
+        self.declare_parameter("nonground_normals_topic", "/nonground_normals")
 
-        self.pub_normals = self.create_publisher(MarkerArray, self.get_parameter("normal_topic").value, 10)
+        self.pub_ground_normals = self.create_publisher(
+            MarkerArray, self.get_parameter("ground_normals_topic").value, 10
+        )
+        self.pub_nonground_normals = self.create_publisher(
+            MarkerArray, self.get_parameter("nonground_normals_topic").value, 10
+        )
 
         self.get_logger().info(f"Listening: {self.points_topic}")
-        self.get_logger().info(f"Publishing grid cells: {self.output_topic}")
+        self.get_logger().info(f"Publishing ground grid cells: {self.ground_topic}")
+        self.get_logger().info(f"Publishing non-ground grid cells: {self.nonground_topic}")
 
     def cb_points(self, msg: PointCloud2):
         self.get_logger().info("cb_points fired", throttle_duration_sec=1.0)
@@ -339,6 +373,7 @@ class GridGroundNode(Node):
         )
 
         results = []
+        coords = []
 
         fit_ok = 0
         fit_fail = 0
@@ -381,6 +416,7 @@ class GridGroundNode(Node):
 
             confidence = float(np.clip(inlier_ratio, 0.0, 1.0))
             results.append([x_c, y_c, z_c, normal[0], normal[1], normal[2], confidence])
+            coords.append([cx, cy])
 
         avg_inlier = (total_inlier / fit_ok) if fit_ok > 0 else 0.0
         self.get_logger().info(
@@ -398,14 +434,58 @@ class GridGroundNode(Node):
         header.stamp = msg.header.stamp
         header.frame_id = msg.header.frame_id  # same frame as input cloud
 
-        pc2 = _make_pc2(header, out)
-        self.get_logger().info(f"publish: ground_grid_cells N={out.shape[0]}", throttle_duration_sec=1.0)
-        self.pub.publish(pc2)
+        d_max = float(self.get_parameter("d_max").value)
+        use_8 = bool(self.get_parameter("use_8_neighbors").value)
+        coords = np.asarray(coords, dtype=np.int32)
+
+        coord_to_idx = {(int(coords[i, 0]), int(coords[i, 1])): i for i in range(coords.shape[0])}
+
+        neigh = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        if use_8:
+            neigh += [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+        uf = UnionFind(out.shape[0])
+        centers = out[:, 0:3].astype(np.float64, copy=False)
+
+        for i in range(coords.shape[0]):
+            cx, cy = int(coords[i, 0]), int(coords[i, 1])
+            for dx, dy in neigh:
+                j = coord_to_idx.get((cx + dx, cy + dy), None)
+                if j is None:
+                    continue
+                if np.linalg.norm(centers[i] - centers[j]) < d_max:
+                    uf.union(i, j)
+
+        roots = np.array([uf.find(i) for i in range(out.shape[0])], dtype=np.int32)
+        unique_roots, counts = np.unique(roots, return_counts=True)
+        ground_root = int(unique_roots[np.argmax(counts)])
+        is_ground = roots == ground_root
+
+        out_ground = out[is_ground]
+        out_nonground = out[~is_ground]
+
+        if out_ground.shape[0] > 0:
+            self.pub_ground.publish(_make_pc2(header, out_ground))
+        if out_nonground.shape[0] > 0:
+            self.pub_nonground.publish(_make_pc2(header, out_nonground))
+
+        self.get_logger().info(
+            f"publish: ground N={out_ground.shape[0]} nonground N={out_nonground.shape[0]}",
+            throttle_duration_sec=1.0
+        )
 
         if bool(self.get_parameter("publish_normals_markers").value):
             length = float(self.get_parameter("normal_length").value)
-            ma = make_normal_marker_array(header, out, length)
-            self.pub_normals.publish(ma)
+            if out_ground.shape[0] > 0:
+                ma_g = make_normal_marker_array(
+                    header, out_ground, length, "ground_normals", (0.0, 1.0, 0.0, 1.0)
+                )
+                self.pub_ground_normals.publish(ma_g)
+            if out_nonground.shape[0] > 0:
+                ma_ng = make_normal_marker_array(
+                    header, out_nonground, length, "nonground_normals", (1.0, 0.0, 0.0, 1.0)
+                )
+                self.pub_nonground_normals.publish(ma_ng)
 
 
 def main():
