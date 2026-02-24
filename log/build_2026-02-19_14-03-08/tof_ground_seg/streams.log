@@ -1,0 +1,42 @@
+[0.389s] Invoking command in '/home/linfu/tof_ws/build/tof_ground_seg': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /home/linfu/tof_ws/build/tof_ground_seg/build
+[0.533s] running develop
+[0.600s] /usr/lib/python3/dist-packages/setuptools/command/easy_install.py:363: UserWarning: Unbuilt egg for pytest-repeat [unknown version] (/usr/lib/python3/dist-packages)
+[0.601s]   self.local_index = Environment(self.shadow_path + sys.path)
+[0.614s] Removing /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof-ground-seg.egg-link (link to .)
+[0.630s] Invoked command in '/home/linfu/tof_ws/build/tof_ground_seg' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /home/linfu/tof_ws/build/tof_ground_seg/build
+[0.631s] Invoking command in '/home/linfu/tof_ws/src/tof_ground_seg': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/tof_ground_seg build --build-base /home/linfu/tof_ws/build/tof_ground_seg/build install --record /home/linfu/tof_ws/build/tof_ground_seg/install.log --single-version-externally-managed install_data --force
+[0.757s] running egg_info
+[0.764s] writing ../../build/tof_ground_seg/tof_ground_seg.egg-info/PKG-INFO
+[0.764s] writing dependency_links to ../../build/tof_ground_seg/tof_ground_seg.egg-info/dependency_links.txt
+[0.765s] writing entry points to ../../build/tof_ground_seg/tof_ground_seg.egg-info/entry_points.txt
+[0.765s] writing requirements to ../../build/tof_ground_seg/tof_ground_seg.egg-info/requires.txt
+[0.765s] writing top-level names to ../../build/tof_ground_seg/tof_ground_seg.egg-info/top_level.txt
+[0.781s] reading manifest file '../../build/tof_ground_seg/tof_ground_seg.egg-info/SOURCES.txt'
+[0.781s] writing manifest file '../../build/tof_ground_seg/tof_ground_seg.egg-info/SOURCES.txt'
+[0.781s] running build
+[0.781s] running build_py
+[0.781s] creating /home/linfu/tof_ws/build/tof_ground_seg/build
+[0.781s] creating /home/linfu/tof_ws/build/tof_ground_seg/build/lib
+[0.781s] creating /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg
+[0.781s] copying tof_ground_seg/grid_ground_node.py -> /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg
+[0.781s] copying tof_ground_seg/__init__.py -> /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg
+[0.781s] copying tof_ground_seg/timing_histogram_from_logs.py -> /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg
+[0.782s] running install
+[0.785s] running install_lib
+[0.793s] creating /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg
+[0.793s] copying /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg/grid_ground_node.py -> /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg
+[0.793s] copying /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg/__init__.py -> /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg
+[0.793s] copying /home/linfu/tof_ws/build/tof_ground_seg/build/lib/tof_ground_seg/timing_histogram_from_logs.py -> /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg
+[0.793s] byte-compiling /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg/grid_ground_node.py to grid_ground_node.cpython-312.pyc
+[0.798s] byte-compiling /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg/__init__.py to __init__.cpython-312.pyc
+[0.798s] byte-compiling /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg/timing_histogram_from_logs.py to timing_histogram_from_logs.cpython-312.pyc
+[0.798s] running install_data
+[0.799s] copying resource/tof_ground_seg -> /home/linfu/tof_ws/install/tof_ground_seg/share/ament_index/resource_index/packages
+[0.799s] copying package.xml -> /home/linfu/tof_ws/install/tof_ground_seg/share/tof_ground_seg
+[0.799s] running install_egg_info
+[0.808s] Copying ../../build/tof_ground_seg/tof_ground_seg.egg-info to /home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg-0.0.1-py3.12.egg-info
+[0.808s] running install_scripts
+[0.864s] Installing grid_ground script to /home/linfu/tof_ws/install/tof_ground_seg/lib/tof_ground_seg
+[0.864s] Installing timing_hist script to /home/linfu/tof_ws/install/tof_ground_seg/lib/tof_ground_seg
+[0.864s] writing list of installed files to '/home/linfu/tof_ws/build/tof_ground_seg/install.log'
+[0.880s] Invoked command in '/home/linfu/tof_ws/src/tof_ground_seg' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/tof_ground_seg build --build-base /home/linfu/tof_ws/build/tof_ground_seg/build install --record /home/linfu/tof_ws/build/tof_ground_seg/install.log --single-version-externally-managed install_data --force

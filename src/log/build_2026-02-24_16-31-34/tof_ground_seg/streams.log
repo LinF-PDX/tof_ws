@@ -1,0 +1,26 @@
+[0.384s] Invoking command in '/home/linfu/tof_ws/src/tof_ground_seg': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/src/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/tof_ground_seg build --build-base /home/linfu/tof_ws/src/build/tof_ground_seg/build install --record /home/linfu/tof_ws/src/build/tof_ground_seg/install.log --single-version-externally-managed install_data
+[0.507s] running egg_info
+[0.514s] writing ../build/tof_ground_seg/tof_ground_seg.egg-info/PKG-INFO
+[0.514s] writing dependency_links to ../build/tof_ground_seg/tof_ground_seg.egg-info/dependency_links.txt
+[0.514s] writing entry points to ../build/tof_ground_seg/tof_ground_seg.egg-info/entry_points.txt
+[0.514s] writing requirements to ../build/tof_ground_seg/tof_ground_seg.egg-info/requires.txt
+[0.514s] writing top-level names to ../build/tof_ground_seg/tof_ground_seg.egg-info/top_level.txt
+[0.530s] reading manifest file '../build/tof_ground_seg/tof_ground_seg.egg-info/SOURCES.txt'
+[0.530s] writing manifest file '../build/tof_ground_seg/tof_ground_seg.egg-info/SOURCES.txt'
+[0.531s] running build
+[0.531s] running build_py
+[0.531s] copying tof_ground_seg/grid_ground_node.py -> /home/linfu/tof_ws/src/build/tof_ground_seg/build/lib/tof_ground_seg
+[0.531s] running install
+[0.535s] running install_lib
+[0.542s] copying /home/linfu/tof_ws/src/build/tof_ground_seg/build/lib/tof_ground_seg/grid_ground_node.py -> /home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg
+[0.543s] byte-compiling /home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg/grid_ground_node.py to grid_ground_node.cpython-312.pyc
+[0.547s] running install_data
+[0.547s] running install_egg_info
+[0.556s] removing '/home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg-0.0.1-py3.12.egg-info' (and everything under it)
+[0.556s] Copying ../build/tof_ground_seg/tof_ground_seg.egg-info to /home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages/tof_ground_seg-0.0.1-py3.12.egg-info
+[0.556s] running install_scripts
+[0.611s] Installing grid_ground script to /home/linfu/tof_ws/src/install/tof_ground_seg/lib/tof_ground_seg
+[0.611s] Installing timing_hist script to /home/linfu/tof_ws/src/install/tof_ground_seg/lib/tof_ground_seg
+[0.611s] Installing timing_hist_txt script to /home/linfu/tof_ws/src/install/tof_ground_seg/lib/tof_ground_seg
+[0.611s] writing list of installed files to '/home/linfu/tof_ws/src/build/tof_ground_seg/install.log'
+[0.628s] Invoked command in '/home/linfu/tof_ws/src/tof_ground_seg' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/linfu/tof_ws/src/build/tof_ground_seg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linfu/tof_ws/src/install/tof_ground_seg/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/tof_ground_seg build --build-base /home/linfu/tof_ws/src/build/tof_ground_seg/build install --record /home/linfu/tof_ws/src/build/tof_ground_seg/install.log --single-version-externally-managed install_data
