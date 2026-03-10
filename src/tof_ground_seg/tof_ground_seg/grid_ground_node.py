@@ -1,8 +1,6 @@
-import math
 import os
 import time
-from dataclasses import dataclass
-from typing import Dict, Tuple, Optional
+from typing import Tuple, Optional
 
 import numpy as np
 
@@ -38,13 +36,6 @@ class UnionFind:
         self.size[ra] += self.size[rb]
 
 
-@dataclass
-class CellResult:
-    center_xyz: np.ndarray  # (3,)
-    normal: np.ndarray      # (3,)
-    confidence: float       # 0..1
-
-
 def _pc2_to_xyz_numpy(msg: PointCloud2) -> np.ndarray:
     if msg.width * msg.height == 0:
         return np.zeros((0, 3), dtype=np.float32)
@@ -63,16 +54,12 @@ def _pc2_to_xyz_numpy(msg: PointCloud2) -> np.ndarray:
     n_pts = min(n_pts, buf.size // step)
     buf = buf[: n_pts * step].reshape(n_pts, step)
 
-    def decode(dtype_f4: np.dtype) -> np.ndarray:
-        x = buf[:, offsets["x"]:offsets["x"] + 4].copy().view(dtype_f4).reshape(-1)
-        y = buf[:, offsets["y"]:offsets["y"] + 4].copy().view(dtype_f4).reshape(-1)
-        z = buf[:, offsets["z"]:offsets["z"] + 4].copy().view(dtype_f4).reshape(-1)
+    def decode(buf_view: np.ndarray, dtype_f4: np.dtype) -> np.ndarray:
+        x = buf_view[:, offsets["x"]:offsets["x"] + 4].copy().view(dtype_f4).reshape(-1)
+        y = buf_view[:, offsets["y"]:offsets["y"] + 4].copy().view(dtype_f4).reshape(-1)
+        z = buf_view[:, offsets["z"]:offsets["z"] + 4].copy().view(dtype_f4).reshape(-1)
         pts = np.stack([x, y, z], axis=1).astype(np.float32, copy=False)
         return pts
-
-    # Decode both ways (do NOT trust msg.is_bigendian)
-    pts_le = decode(np.dtype("<f4"))
-    pts_be = decode(np.dtype(">f4"))
 
     def score(pts: np.ndarray) -> float:
         finite = np.isfinite(pts).all(axis=1)
@@ -83,12 +70,14 @@ def _pc2_to_xyz_numpy(msg: PointCloud2) -> np.ndarray:
         reasonable = (np.abs(pts) < 100.0).all(axis=1)
         return float(np.mean(reasonable))
 
-    # Use a small sample to choose endian fast
+    # Use a small sample to choose endian, then decode full cloud once.
     M = min(5000, n_pts)
-    s_le = score(pts_le[:M])
-    s_be = score(pts_be[:M])
+    sample = buf[:M]
+    s_le = score(decode(sample, np.dtype("<f4")))
+    s_be = score(decode(sample, np.dtype(">f4")))
+    chosen_dtype = np.dtype("<f4") if s_le >= s_be else np.dtype(">f4")
 
-    pts = pts_le if s_le >= s_be else pts_be
+    pts = decode(buf, chosen_dtype)
 
     # Drop non-finite and absurd
     pts = pts[np.isfinite(pts).all(axis=1)]
@@ -111,8 +100,8 @@ def _make_pc2(header: Header, data: np.ndarray) -> PointCloud2:
         PointField(name="nz", offset=20, datatype=PointField.FLOAT32, count=1),
         PointField(name="confidence", offset=24, datatype=PointField.FLOAT32, count=1),
     ]
-    # point_cloud2.create_cloud expects iterable of tuples/lists
-    pts = [tuple(row.tolist()) for row in data.astype(np.float32)]
+    # create_cloud accepts iterable-of-iterable; tolist() is much faster than Python row loops.
+    pts = data.astype(np.float32, copy=False).tolist()
     return point_cloud2.create_cloud(header, fields, pts)
 
 
@@ -207,14 +196,14 @@ class GridGroundNode(Node):
         self.declare_parameter("nonground_topic", "/nonground_grid_cells")
 
         # Grid + fitting parameters
-        self.declare_parameter("cell_size", 0.07)         # meters
-        self.declare_parameter("min_points_per_cell", 30)
+        self.declare_parameter("cell_size", 0.03)         # meters
+        self.declare_parameter("min_points_per_cell", 20)
         self.declare_parameter("outlier_dist", 0.03)      # meters, plane distance threshold
         self.declare_parameter("max_range", 6.0)          # meters; drop far points
-        self.declare_parameter("min_range", 0.10)         # meters; drop too-close junk
-        self.declare_parameter("up_axis", "x")            # one of x,y,z in cloud frame
+        self.declare_parameter("min_range", 0.05)         # meters; drop too-close junk
+        self.declare_parameter("up_axis", "z")            # one of x,y,z in cloud frame
         self.declare_parameter("prefer_normal_positive_z", True)
-        self.declare_parameter("d_max", 0.15)
+        self.declare_parameter("d_max", 0.035)
         self.declare_parameter("use_8_neighbors", True)
         self.declare_parameter("ground_components_keep", 1)  # keep K largest connected components
 
@@ -245,6 +234,9 @@ class GridGroundNode(Node):
         self.declare_parameter("timing_log_each_step", False)
         self.declare_parameter("timing_save_txt", True)
         self.declare_parameter("timing_txt_path", "/tmp/tof_step_time_ms.txt")
+        self.declare_parameter("publish_raw_debug_cloud", False)
+        self.declare_parameter("raw_debug_max_points", 20000)
+        self.declare_parameter("verbose_debug_logs", False)
 
         self.pub_ground_normals = self.create_publisher(
             MarkerArray, self.get_parameter("ground_normals_topic").value, 10
@@ -326,20 +318,27 @@ class GridGroundNode(Node):
     def cb_points(self, msg: PointCloud2):
         t0 = time.perf_counter()
         try:
-            self.get_logger().info("cb_points fired", throttle_duration_sec=1.0)
+            logger = self.get_logger()
+            verbose = bool(self.get_parameter("verbose_debug_logs").value)
+            publish_raw_debug = bool(self.get_parameter("publish_raw_debug_cloud").value)
+            raw_debug_max_points = int(self.get_parameter("raw_debug_max_points").value)
+            raw_debug_max_points = max(0, raw_debug_max_points)
+
+            if verbose:
+                logger.info("cb_points fired", throttle_duration_sec=1.0)
 
             pts = _pc2_to_xyz_numpy(msg)
-            self.get_logger().info(f"parsed pts={pts.shape[0]}", throttle_duration_sec=1.0)
-            # ---- DEBUG: basic sanity ----
-            self.get_logger().info(
-                f"cb fired: width={msg.width} height={msg.height} step={msg.point_step} bigendian={msg.is_bigendian}",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                logger.info(f"parsed pts={pts.shape[0]}", throttle_duration_sec=1.0)
+                logger.info(
+                    f"cb fired: width={msg.width} height={msg.height} step={msg.point_step} bigendian={msg.is_bigendian}",
+                    throttle_duration_sec=1.0
+                )
 
-            if pts.shape[0] > 0:
+            if verbose and pts.shape[0] > 0:
                 mn = np.min(pts, axis=0)
                 mx = np.max(pts, axis=0)
-                self.get_logger().info(
+                logger.info(
                     f"parsed pts={pts.shape[0]}  min(x,y,z)={mn.tolist()}  max(x,y,z)={mx.tolist()}",
                     throttle_duration_sec=1.0
                 )
@@ -348,15 +347,17 @@ class GridGroundNode(Node):
             if pts.shape[0] == 0:
                 return
         
-            hdr = Header()
-            hdr.stamp = msg.header.stamp
-            hdr.frame_id = msg.header.frame_id
-            # publish a downsampled raw cloud (first N points) so RViz won't choke
-            N = min(20000, pts.shape[0])
-            debug_pc = point_cloud2.create_cloud_xyz32(hdr, pts[:N].tolist())
-            self.pub_rawdebug.publish(debug_pc)
+            if publish_raw_debug and raw_debug_max_points > 0:
+                hdr = Header()
+                hdr.stamp = msg.header.stamp
+                hdr.frame_id = msg.header.frame_id
+                # publish a downsampled raw cloud (first N points) for RViz debugging.
+                n_dbg = min(raw_debug_max_points, pts.shape[0])
+                debug_pc = point_cloud2.create_cloud_xyz32(hdr, pts[:n_dbg].tolist())
+                self.pub_rawdebug.publish(debug_pc)
 
-            self.get_logger().info(f"raw pts={pts.shape[0]}", throttle_duration_sec=1.0)
+            if verbose:
+                logger.info(f"raw pts={pts.shape[0]}", throttle_duration_sec=1.0)
 
 
             # --- NEW: drop non-finite values early (handles inf/-inf) ---
@@ -376,7 +377,7 @@ class GridGroundNode(Node):
             axis_idx = {"x": 0, "y": 1, "z": 2}
             up_axis = str(self.get_parameter("up_axis").value).strip().lower()
             if up_axis not in axis_idx:
-                self.get_logger().warn(
+                logger.warn(
                     f"Invalid up_axis='{up_axis}', falling back to 'x'. Valid: x|y|z",
                     throttle_duration_sec=2.0
                 )
@@ -384,8 +385,6 @@ class GridGroundNode(Node):
             up_i = axis_idx[up_axis]
             plane_axes = [i for i in (0, 1, 2) if i != up_i]
             a0, a1 = plane_axes[0], plane_axes[1]
-            axis_name = {0: "x", 1: "y", 2: "z"}
-
             mins = np.array([
                 float(self.get_parameter("x_min").value),
                 float(self.get_parameter("y_min").value),
@@ -411,13 +410,14 @@ class GridGroundNode(Node):
             pts = pts_sane[mask_r & mask_roi]
             n_final = pts.shape[0]
 
-            self.get_logger().info(
-                f"gates: raw={n_raw} finite={n_finite} sane={n_sane} after(range+roi)={n_final}",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                logger.info(
+                    f"gates: raw={n_raw} finite={n_finite} sane={n_sane} after(range+roi)={n_final}",
+                    throttle_duration_sec=1.0
+                )
 
             if pts.shape[0] == 0:
-                self.get_logger().warn("No points left after filtering (range/ROI likely wrong).", throttle_duration_sec=1.0)
+                logger.warn("No points left after filtering (range/ROI likely wrong).", throttle_duration_sec=1.0)
                 return
 
 
@@ -426,46 +426,51 @@ class GridGroundNode(Node):
             outlier_dist = float(self.get_parameter("outlier_dist").value)
             prefer_pos_z = bool(self.get_parameter("prefer_normal_positive_z").value)
 
-            self.get_logger().info(
-                f"after filter pts={pts.shape[0]}  "
-                f"x[{pts[:,0].min():.3f},{pts[:,0].max():.3f}] "
-                f"y[{pts[:,1].min():.3f},{pts[:,1].max():.3f}] "
-                f"z[{pts[:,2].min():.3f},{pts[:,2].max():.3f}]",
-                throttle_duration_sec=1.0
-            )
-            # compute test indices using the current cell size
-            ix_test = np.floor((pts[:, a0] - mins[a0]) / cell).astype(np.int32)
-            iy_test = np.floor((pts[:, a1] - mins[a1]) / cell).astype(np.int32)
-            self.get_logger().info(
-                f"grid plane axes=({axis_name[a0]},{axis_name[a1]}) up={up_axis} "
-                f"index ranges: ix[{ix_test.min()},{ix_test.max()}] iy[{iy_test.min()},{iy_test.max()}]",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                axis_name = {0: "x", 1: "y", 2: "z"}
+                logger.info(
+                    f"after filter pts={pts.shape[0]}  "
+                    f"x[{pts[:,0].min():.3f},{pts[:,0].max():.3f}] "
+                    f"y[{pts[:,1].min():.3f},{pts[:,1].max():.3f}] "
+                    f"z[{pts[:,2].min():.3f},{pts[:,2].max():.3f}]",
+                    throttle_duration_sec=1.0
+                )
+                ix_test = np.floor((pts[:, a0] - mins[a0]) / cell).astype(np.int32)
+                iy_test = np.floor((pts[:, a1] - mins[a1]) / cell).astype(np.int32)
+                logger.info(
+                    f"grid plane axes=({axis_name[a0]},{axis_name[a1]}) up={up_axis} "
+                    f"index ranges: ix[{ix_test.min()},{ix_test.max()}] iy[{iy_test.min()},{iy_test.max()}]",
+                    throttle_duration_sec=1.0
+                )
 
             # Grid indexing on the plane orthogonal to up_axis
             ix = np.floor((pts[:, a0] - mins[a0]) / cell).astype(np.int32)
             iy = np.floor((pts[:, a1] - mins[a1]) / cell).astype(np.int32)
 
-            # ---- NEW: robust, fast grid grouping using numpy ----
-            self.get_logger().info(
-                f"about to grid: pts={pts.shape} ix={ix.shape} iy={iy.shape} "
-                f"ix_sample={ix[:5].tolist()} iy_sample={iy[:5].tolist()}",
-                throttle_duration_sec=1.0
-            )
-            keys = np.stack([ix, iy], axis=1)  # (N,2)
+            if verbose:
+                logger.info(
+                    f"about to grid: pts={pts.shape} ix={ix.shape} iy={iy.shape} "
+                    f"ix_sample={ix[:5].tolist()} iy_sample={iy[:5].tolist()}",
+                    throttle_duration_sec=1.0
+                )
+            keys = np.stack([ix, iy], axis=1)
             uniq, inv = np.unique(keys, axis=0, return_inverse=True)
 
-            # build cell->indices mapping
-            cells = {}
-            for i in range(uniq.shape[0]):
-                cells[(int(uniq[i, 0]), int(uniq[i, 1]))] = np.where(inv == i)[0]
+            # Build grouped point indices in O(N log N) without repeated np.where scans.
+            order = np.argsort(inv, kind="mergesort")
+            inv_sorted = inv[order]
+            split_starts = np.flatnonzero(
+                np.r_[True, inv_sorted[1:] != inv_sorted[:-1]]
+            ).astype(np.int32, copy=False)
+            split_ends = np.r_[split_starts[1:], inv_sorted.size]
 
-            cell_sizes = np.fromiter((len(v) for v in cells.values()), dtype=np.int32)
-            self.get_logger().info(
-                f"grid: occupied_cells={uniq.shape[0]} "
-                f"median_pts={int(np.median(cell_sizes))} max_pts={int(np.max(cell_sizes))}",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                cell_sizes = split_ends - split_starts
+                logger.info(
+                    f"grid: occupied_cells={uniq.shape[0]} "
+                    f"median_pts={int(np.median(cell_sizes))} max_pts={int(np.max(cell_sizes))}",
+                    throttle_duration_sec=1.0
+                )
 
             results = []
             coords = []
@@ -476,11 +481,14 @@ class GridGroundNode(Node):
             total_inlier = 0.0
             cells_considered = 0
 
-            for (cx, cy), idxs in cells.items():
-
+            for start, end in zip(split_starts, split_ends):
+                gid = int(inv_sorted[start])
+                cx = int(uniq[gid, 0])
+                cy = int(uniq[gid, 1])
+                idxs = order[start:end]
                 cells_considered += 1
 
-                if len(idxs) < min_pts:
+                if idxs.size < min_pts:
                     continue
 
                 cell_pts = pts[idxs, :]
@@ -531,11 +539,12 @@ class GridGroundNode(Node):
                 coords.append([cx, cy])
 
             avg_inlier = (total_inlier / fit_ok) if fit_ok > 0 else 0.0
-            self.get_logger().info(
-                f"plane: considered={cells_considered} fit_ok={fit_ok} fit_fail={fit_fail} "
-                f"nx_reject={nx_reject} avg_inlier={avg_inlier:.3f} outputs={len(results)}",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                logger.info(
+                    f"plane: considered={cells_considered} fit_ok={fit_ok} fit_fail={fit_fail} "
+                    f"nx_reject={nx_reject} avg_inlier={avg_inlier:.3f} outputs={len(results)}",
+                    throttle_duration_sec=1.0
+                )
 
             if not results:
                 return
@@ -557,7 +566,8 @@ class GridGroundNode(Node):
                 neigh += [(-1, -1), (-1, 1), (1, -1), (1, 1)]
 
             uf = UnionFind(out.shape[0])
-            centers = out[:, 0:3].astype(np.float64, copy=False)
+            centers = out[:, 0:3]
+            d_max2 = d_max * d_max
 
             for i in range(coords.shape[0]):
                 cx, cy = int(coords[i, 0]), int(coords[i, 1])
@@ -565,7 +575,8 @@ class GridGroundNode(Node):
                     j = coord_to_idx.get((cx + dx, cy + dy), None)
                     if j is None:
                         continue
-                    if np.linalg.norm(centers[i] - centers[j]) < d_max:
+                    d = centers[i] - centers[j]
+                    if float(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) < d_max2:
                         uf.union(i, j)
 
             roots = np.array([uf.find(i) for i in range(out.shape[0])], dtype=np.int32)
@@ -583,10 +594,11 @@ class GridGroundNode(Node):
             if out_nonground.shape[0] > 0:
                 self.pub_nonground.publish(_make_pc2(header, out_nonground))
 
-            self.get_logger().info(
-                f"publish: ground N={out_ground.shape[0]} nonground N={out_nonground.shape[0]}",
-                throttle_duration_sec=1.0
-            )
+            if verbose:
+                logger.info(
+                    f"publish: ground N={out_ground.shape[0]} nonground N={out_nonground.shape[0]}",
+                    throttle_duration_sec=1.0
+                )
 
             if bool(self.get_parameter("publish_normals_markers").value):
                 length = float(self.get_parameter("normal_length").value)
