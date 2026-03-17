@@ -1,0 +1,25 @@
+# Build files
+build/
+dist/
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# C++ / ROS / robotics (common for your setup)
+*.o
+*.so
+devel/
+install/
+log/
+
+# VS Code
+.vscode/
+
+# System files
+.DS_Store
+
+bhf_tof_cam_imu_correct_0.db3
