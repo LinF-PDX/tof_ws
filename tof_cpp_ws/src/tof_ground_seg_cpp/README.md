@@ -37,3 +37,12 @@ source /opt/ros/humble/setup.bash
 source /home/keqi/BHFRobot/tof_cpp_ws/install/setup.bash
 ros2 run tof_ground_seg_cpp grid_ground
 ```
+
+  source /opt/ros/humble/setup.bash
+  CCACHE_DISABLE=1 colcon build --symlink-install
+
+
+  source /opt/ros/humble/setup.bash
+  source /home/keqi/BHFRobot/tof_cpp_ws/install/setup.bash
+  ros2 run tof_ground_seg_cpp grid_ground
+
