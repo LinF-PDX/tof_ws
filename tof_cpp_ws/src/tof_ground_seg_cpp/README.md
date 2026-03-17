@@ -45,4 +45,23 @@ ros2 run tof_ground_seg_cpp grid_ground
   source /opt/ros/humble/setup.bash
   source /home/keqi/BHFRobot/tof_cpp_ws/install/setup.bash
   ros2 run tof_ground_seg_cpp grid_ground
+------------------------------------------
+  source /opt/ros/jazzy/setup.bash
+
+  unset AMENT_PREFIX_PATH
+  unset COLCON_PREFIX_PATH
+  unset CMAKE_PREFIX_PATH
+  unset PYTHONPATH
+  unset ROS_DISTRO
+  unset ROS_VERSION
+
+  source /opt/ros/jazzy/setup.bash
+
+  cd ~/tof_ws/tof_cpp_ws
+  rm -rf build install log
+  colcon build --symlink-install
+
+  source install/setup.bash
+  ros2 pkg list | grep tof_ground_seg_cpp
+  ros2 run tof_ground_seg_cpp grid_ground
 
