@@ -1,0 +1,13 @@
+CMake Error at /opt/ros/humble/share/ament_cmake_target_dependencies/cmake/ament_target_dependencies.cmake:145 (target_link_libraries):
+  The keyword signature for target_link_libraries has already been used with
+  the target "grid_ground_node_lib".  All uses of target_link_libraries with
+  a target must be either all-keyword or all-plain.
+
+  The uses of the keyword signature are here:
+
+   * CMakeLists.txt:27 (target_link_libraries)
+
+Call Stack (most recent call first):
+  CMakeLists.txt:29 (ament_target_dependencies)
+
+

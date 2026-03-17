@@ -1,0 +1,202 @@
+-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found rclcpp: 16.0.14 (/opt/ros/humble/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 3.1.7 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+-- Found rosidl_adapter: 3.1.7 (/opt/ros/humble/share/rosidl_adapter/cmake)
+-- Found rosidl_generator_cpp: 3.1.7 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+-- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/ros/humble/share/rmw_cyclonedds_cpp/cmake)
+-- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+-- Found sensor_msgs: 4.9.0 (/opt/ros/humble/share/sensor_msgs/cmake)
+-- Found visualization_msgs: 4.9.0 (/opt/ros/humble/share/visualization_msgs/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp
+[ 25%] Building CXX object CMakeFiles/grid_ground_node_lib.dir/src/grid_ground_node.cpp.o
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp: In constructor ‘tof_ground_seg_cpp::GridGroundNode::GridGroundNode()’:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:191:38: error: no matching function for call to ‘max(int, int64_t)’
+  191 |   timing_histogram_window_ = std::max(1, this->get_parameter("timing_histogram_window").as_int());
+      |                              ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note: candidate: ‘template<class _Tp> constexpr const _Tp& std::max(const _Tp&, const _Tp&)’
+  254 |     max(const _Tp& __a, const _Tp& __b)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:191:38: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  191 |   timing_histogram_window_ = std::max(1, this->get_parameter("timing_histogram_window").as_int());
+      |                              ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr const _Tp& std::max(const _Tp&, const _Tp&, _Compare)’
+  300 |     max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:191:38: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  191 |   timing_histogram_window_ = std::max(1, this->get_parameter("timing_histogram_window").as_int());
+      |                              ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note: candidate: ‘template<class _Tp> constexpr _Tp std::max(std::initializer_list<_Tp>)’
+ 3461 |     max(initializer_list<_Tp> __l)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:191:38: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  191 |   timing_histogram_window_ = std::max(1, this->get_parameter("timing_histogram_window").as_int());
+      |                              ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr _Tp std::max(std::initializer_list<_Tp>, _Compare)’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:191:38: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  191 |   timing_histogram_window_ = std::max(1, this->get_parameter("timing_histogram_window").as_int());
+      |                              ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:193:13: error: no matching function for call to ‘max(int, int64_t)’
+  193 |     std::max(1, this->get_parameter("timing_histogram_report_every").as_int());
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note: candidate: ‘template<class _Tp> constexpr const _Tp& std::max(const _Tp&, const _Tp&)’
+  254 |     max(const _Tp& __a, const _Tp& __b)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:193:13: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  193 |     std::max(1, this->get_parameter("timing_histogram_report_every").as_int());
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr const _Tp& std::max(const _Tp&, const _Tp&, _Compare)’
+  300 |     max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:193:13: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  193 |     std::max(1, this->get_parameter("timing_histogram_report_every").as_int());
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note: candidate: ‘template<class _Tp> constexpr _Tp std::max(std::initializer_list<_Tp>)’
+ 3461 |     max(initializer_list<_Tp> __l)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:193:13: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  193 |     std::max(1, this->get_parameter("timing_histogram_report_every").as_int());
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr _Tp std::max(std::initializer_list<_Tp>, _Compare)’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:193:13: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  193 |     std::max(1, this->get_parameter("timing_histogram_report_every").as_int());
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp: In member function ‘void tof_ground_seg_cpp::GridGroundNode::cb_points(sensor_msgs::msg::PointCloud2_<std::allocator<void> >::SharedPtr)’:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:623:46: error: no matching function for call to ‘max(int, int64_t)’
+  623 |     const int raw_debug_max_points = std::max(0, this->get_parameter("raw_debug_max_points").as_int());
+      |                                      ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note: candidate: ‘template<class _Tp> constexpr const _Tp& std::max(const _Tp&, const _Tp&)’
+  254 |     max(const _Tp& __a, const _Tp& __b)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:623:46: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  623 |     const int raw_debug_max_points = std::max(0, this->get_parameter("raw_debug_max_points").as_int());
+      |                                      ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr const _Tp& std::max(const _Tp&, const _Tp&, _Compare)’
+  300 |     max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:623:46: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  623 |     const int raw_debug_max_points = std::max(0, this->get_parameter("raw_debug_max_points").as_int());
+      |                                      ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note: candidate: ‘template<class _Tp> constexpr _Tp std::max(std::initializer_list<_Tp>)’
+ 3461 |     max(initializer_list<_Tp> __l)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:623:46: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  623 |     const int raw_debug_max_points = std::max(0, this->get_parameter("raw_debug_max_points").as_int());
+      |                                      ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr _Tp std::max(std::initializer_list<_Tp>, _Compare)’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:623:46: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  623 |     const int raw_debug_max_points = std::max(0, this->get_parameter("raw_debug_max_points").as_int());
+      |                                      ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:820:32: error: no matching function for call to ‘max(int, int64_t)’
+  820 |     const int keep_k = std::max(1, this->get_parameter("ground_components_keep").as_int());
+      |                        ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note: candidate: ‘template<class _Tp> constexpr const _Tp& std::max(const _Tp&, const _Tp&)’
+  254 |     max(const _Tp& __a, const _Tp& __b)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:254:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:820:32: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  820 |     const int keep_k = std::max(1, this->get_parameter("ground_components_keep").as_int());
+      |                        ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/array:40,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:3,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr const _Tp& std::max(const _Tp&, const _Tp&, _Compare)’
+  300 |     max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algobase.h:300:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:820:32: note:   deduced conflicting types for parameter ‘const _Tp’ (‘int’ and ‘int64_t’ {aka ‘long int’})
+  820 |     const int keep_k = std::max(1, this->get_parameter("ground_components_keep").as_int());
+      |                        ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note: candidate: ‘template<class _Tp> constexpr _Tp std::max(std::initializer_list<_Tp>)’
+ 3461 |     max(initializer_list<_Tp> __l)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3461:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:820:32: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  820 |     const int keep_k = std::max(1, this->get_parameter("ground_components_keep").as_int());
+      |                        ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/11/functional:65,
+                 from /usr/include/eigen3/Eigen/Core:85,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/include/tof_ground_seg_cpp/grid_ground_node.hpp:10,
+                 from /home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note: candidate: ‘template<class _Tp, class _Compare> constexpr _Tp std::max(std::initializer_list<_Tp>, _Compare)’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   template argument deduction/substitution failed:
+/home/keqi/BHFRobot/tof_cpp_ws/src/tof_ground_seg_cpp/src/grid_ground_node.cpp:820:32: note:   mismatched types ‘std::initializer_list<_Tp>’ and ‘int’
+  820 |     const int keep_k = std::max(1, this->get_parameter("ground_components_keep").as_int());
+      |                        ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+gmake[2]: *** [CMakeFiles/grid_ground_node_lib.dir/build.make:76: CMakeFiles/grid_ground_node_lib.dir/src/grid_ground_node.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:139: CMakeFiles/grid_ground_node_lib.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

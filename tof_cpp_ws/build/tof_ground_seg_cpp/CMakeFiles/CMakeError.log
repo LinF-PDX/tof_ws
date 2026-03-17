@@ -1,0 +1,29 @@
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_64043/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_64043.dir/build.make CMakeFiles/cmTC_64043.dir/build
+gmake[1]: Entering directory '/home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_64043.dir/CMakeCCompilerABI.c.o
+/usr/lib/ccache/gcc   -v -o CMakeFiles/cmTC_64043.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c
+ccache: error: Failed to create directory /run/user/1000/ccache-tmp: Permission denied
+gmake[1]: *** [CMakeFiles/cmTC_64043.dir/build.make:78: CMakeFiles/cmTC_64043.dir/CMakeCCompilerABI.c.o] Error 1
+gmake[1]: Leaving directory '/home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_64043/fast] Error 2
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_70f92/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_70f92.dir/build.make CMakeFiles/cmTC_70f92.dir/build
+gmake[1]: Entering directory '/home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_70f92.dir/testCCompiler.c.o
+/usr/lib/ccache/gcc    -o CMakeFiles/cmTC_70f92.dir/testCCompiler.c.o -c /home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp/testCCompiler.c
+ccache: error: Failed to create directory /run/user/1000/ccache-tmp: Permission denied
+gmake[1]: *** [CMakeFiles/cmTC_70f92.dir/build.make:78: CMakeFiles/cmTC_70f92.dir/testCCompiler.c.o] Error 1
+gmake[1]: Leaving directory '/home/keqi/BHFRobot/tof_cpp_ws/build/tof_ground_seg_cpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_70f92/fast] Error 2
+
+
+

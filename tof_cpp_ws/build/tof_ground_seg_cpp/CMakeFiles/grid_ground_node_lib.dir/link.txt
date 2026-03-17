@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgrid_ground_node_lib.a CMakeFiles/grid_ground_node_lib.dir/src/grid_ground_node.cpp.o
+/usr/bin/ranlib libgrid_ground_node_lib.a
