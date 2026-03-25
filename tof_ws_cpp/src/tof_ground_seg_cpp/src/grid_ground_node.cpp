@@ -47,6 +47,21 @@ struct PlaneFitResult
   float inlier_ratio = 0.0F;
 };
 
+struct MeshVertex
+{
+  Eigen::Vector3f position = Eigen::Vector3f::Zero();
+  float confidence = 0.0F;
+};
+
+struct VertexAccumulator
+{
+  double weighted_height_sum = 0.0;
+  double weight_sum = 0.0;
+  float confidence_sum = 0.0F;
+  float height = 0.0F;
+  bool valid = false;
+};
+
 class UnionFind
 {
 public:
@@ -463,6 +478,206 @@ std::string format_histogram(const std::vector<double> & samples, const std::vec
   return stream.str();
 }
 
+std::optional<float> predict_up_at_planar(
+  const GridCellPlane & cell,
+  const AxisInfo & axis,
+  float plane0,
+  float plane1)
+{
+  const float n_up = cell.normal[axis.up];
+  if (std::fabs(n_up) < 1.0e-6F) {
+    return std::nullopt;
+  }
+
+  const float predicted = cell.center[axis.up] -
+    (cell.normal[axis.plane0] * (plane0 - cell.center[axis.plane0]) +
+    cell.normal[axis.plane1] * (plane1 - cell.center[axis.plane1])) / n_up;
+  return predicted;
+}
+
+geometry_msgs::msg::Point to_geometry_point(const Eigen::Vector3f & point)
+{
+  geometry_msgs::msg::Point out;
+  out.x = point.x();
+  out.y = point.y();
+  out.z = point.z();
+  return out;
+}
+
+Marker create_delete_marker(const std_msgs::msg::Header & header, const std::string & ns, int id)
+{
+  Marker marker;
+  marker.header = header;
+  marker.ns = ns;
+  marker.id = id;
+  marker.action = Marker::DELETE;
+  return marker;
+}
+
+std::optional<Marker> create_ground_mesh_marker(
+  const std_msgs::msg::Header & header,
+  const std::vector<GridCellPlane> & ground_cells,
+  const AxisInfo & axis,
+  const GridGroundNode::RuntimeConfig & config)
+{
+  if (ground_cells.empty()) {
+    return std::nullopt;
+  }
+
+  std::unordered_map<std::pair<int, int>, VertexAccumulator, IntPairHash> vertices;
+  vertices.reserve(ground_cells.size() * 4U);
+
+  for (const auto & cell : ground_cells) {
+    const std::array<std::pair<int, int>, 4> corners{{
+      {cell.cell_x, cell.cell_y},
+      {cell.cell_x + 1, cell.cell_y},
+      {cell.cell_x, cell.cell_y + 1},
+      {cell.cell_x + 1, cell.cell_y + 1}
+    }};
+
+    for (const auto & corner : corners) {
+      const float plane0 = static_cast<float>(
+        config.mins[axis.plane0] + static_cast<double>(corner.first) * config.cell_size);
+      const float plane1 = static_cast<float>(
+        config.mins[axis.plane1] + static_cast<double>(corner.second) * config.cell_size);
+      const auto predicted = predict_up_at_planar(cell, axis, plane0, plane1);
+      if (!predicted.has_value()) {
+        continue;
+      }
+
+      auto & vertex = vertices[corner];
+      const double weight = std::max(0.05, static_cast<double>(cell.confidence));
+      vertex.weighted_height_sum += weight * static_cast<double>(*predicted);
+      vertex.weight_sum += weight;
+      vertex.confidence_sum += cell.confidence;
+      vertex.valid = true;
+    }
+  }
+
+  if (vertices.empty()) {
+    return std::nullopt;
+  }
+
+  for (auto & [corner, vertex] : vertices) {
+    (void)corner;
+    if (!vertex.valid || vertex.weight_sum <= 0.0) {
+      vertex.valid = false;
+      continue;
+    }
+    vertex.height = static_cast<float>(vertex.weighted_height_sum / vertex.weight_sum);
+    vertex.confidence_sum = std::clamp(vertex.confidence_sum / static_cast<float>(vertex.weight_sum), 0.0F, 1.0F);
+  }
+
+  const std::array<std::pair<int, int>, 4> smooth_neighbors{{
+    std::pair<int, int>{-1, 0}, {1, 0}, {0, -1}, {0, 1}
+  }};
+  for (int iter = 0; iter < config.mesh_smoothing_iterations; ++iter) {
+    std::unordered_map<std::pair<int, int>, float, IntPairHash> next_heights;
+    next_heights.reserve(vertices.size());
+
+    for (const auto & [corner, vertex] : vertices) {
+      if (!vertex.valid) {
+        continue;
+      }
+
+      double neighbor_sum = 0.0;
+      double neighbor_weight = 0.0;
+      for (const auto & offset : smooth_neighbors) {
+        const auto it = vertices.find({corner.first + offset.first, corner.second + offset.second});
+        if (it == vertices.end() || !it->second.valid) {
+          continue;
+        }
+        const double delta = std::fabs(static_cast<double>(vertex.height) - static_cast<double>(it->second.height));
+        if (delta > config.mesh_edge_height_threshold) {
+          continue;
+        }
+        neighbor_sum += static_cast<double>(it->second.height);
+        neighbor_weight += 1.0;
+      }
+
+      float next_height = vertex.height;
+      if (neighbor_weight > 0.0) {
+        const double neighbor_mean = neighbor_sum / neighbor_weight;
+        next_height = static_cast<float>(
+          config.mesh_alpha * static_cast<double>(vertex.height) +
+          (1.0 - config.mesh_alpha) * neighbor_mean);
+      }
+      next_heights.emplace(corner, next_height);
+    }
+
+    for (const auto & [corner, next_height] : next_heights) {
+      vertices[corner].height = next_height;
+    }
+  }
+
+  auto make_vertex = [&](const std::pair<int, int> & corner) -> std::optional<MeshVertex> {
+      const auto it = vertices.find(corner);
+      if (it == vertices.end() || !it->second.valid) {
+        return std::nullopt;
+      }
+
+      MeshVertex vertex;
+      vertex.position[axis.up] = it->second.height;
+      vertex.position[axis.plane0] = static_cast<float>(
+        config.mins[axis.plane0] + static_cast<double>(corner.first) * config.cell_size);
+      vertex.position[axis.plane1] = static_cast<float>(
+        config.mins[axis.plane1] + static_cast<double>(corner.second) * config.cell_size);
+      vertex.confidence = it->second.confidence_sum;
+      return vertex;
+    };
+
+  Marker marker;
+  marker.header = header;
+  marker.ns = "ground_mesh";
+  marker.id = 0;
+  marker.type = Marker::TRIANGLE_LIST;
+  marker.action = Marker::ADD;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 1.0;
+  marker.scale.y = 1.0;
+  marker.scale.z = 1.0;
+  marker.color.r = 0.15F;
+  marker.color.g = 0.75F;
+  marker.color.b = 0.25F;
+  marker.color.a = static_cast<float>(std::clamp(config.mesh_marker_alpha, 0.05, 1.0));
+  marker.points.reserve(ground_cells.size() * 6U);
+
+  for (const auto & cell : ground_cells) {
+    const auto v00 = make_vertex({cell.cell_x, cell.cell_y});
+    const auto v10 = make_vertex({cell.cell_x + 1, cell.cell_y});
+    const auto v01 = make_vertex({cell.cell_x, cell.cell_y + 1});
+    const auto v11 = make_vertex({cell.cell_x + 1, cell.cell_y + 1});
+    if (!v00.has_value() || !v10.has_value() || !v01.has_value() || !v11.has_value()) {
+      continue;
+    }
+
+    const float diag_a = std::fabs(v00->position[axis.up] - v11->position[axis.up]);
+    const float diag_b = std::fabs(v10->position[axis.up] - v01->position[axis.up]);
+
+    if (diag_a <= diag_b) {
+      marker.points.push_back(to_geometry_point(v00->position));
+      marker.points.push_back(to_geometry_point(v10->position));
+      marker.points.push_back(to_geometry_point(v11->position));
+      marker.points.push_back(to_geometry_point(v00->position));
+      marker.points.push_back(to_geometry_point(v11->position));
+      marker.points.push_back(to_geometry_point(v01->position));
+    } else {
+      marker.points.push_back(to_geometry_point(v00->position));
+      marker.points.push_back(to_geometry_point(v10->position));
+      marker.points.push_back(to_geometry_point(v01->position));
+      marker.points.push_back(to_geometry_point(v10->position));
+      marker.points.push_back(to_geometry_point(v11->position));
+      marker.points.push_back(to_geometry_point(v01->position));
+    }
+  }
+
+  if (marker.points.empty()) {
+    return std::nullopt;
+  }
+
+  return marker;
+}
+
 }  // namespace
 
 GridGroundNode::GridGroundNode()
@@ -476,10 +691,12 @@ GridGroundNode::GridGroundNode()
   const auto nonground_topic = this->get_parameter("nonground_topic").as_string();
   const auto ground_normals_topic = this->get_parameter("ground_normals_topic").as_string();
   const auto nonground_normals_topic = this->get_parameter("nonground_normals_topic").as_string();
+  const auto ground_mesh_topic = this->get_parameter("ground_mesh_topic").as_string();
 
   raw_debug_pub_ = this->create_publisher<PointCloud2>("/debug/raw_points_xyz", 10);
   ground_pub_ = this->create_publisher<PointCloud2>(ground_topic, 10);
   nonground_pub_ = this->create_publisher<PointCloud2>(nonground_topic, 10);
+  ground_mesh_pub_ = this->create_publisher<Marker>(ground_mesh_topic, 10);
   ground_normals_pub_ = this->create_publisher<MarkerArray>(ground_normals_topic, 10);
   nonground_normals_pub_ = this->create_publisher<MarkerArray>(nonground_normals_topic, 10);
   points_sub_ = this->create_subscription<PointCloud2>(
@@ -506,6 +723,7 @@ GridGroundNode::GridGroundNode()
   RCLCPP_INFO(this->get_logger(), "Listening: %s", points_topic.c_str());
   RCLCPP_INFO(this->get_logger(), "Publishing ground grid cells: %s", ground_topic.c_str());
   RCLCPP_INFO(this->get_logger(), "Publishing non-ground grid cells: %s", nonground_topic.c_str());
+  RCLCPP_INFO(this->get_logger(), "Publishing ground mesh marker: %s", ground_mesh_topic.c_str());
 }
 
 GridGroundNode::~GridGroundNode()
@@ -543,6 +761,14 @@ void GridGroundNode::declare_parameters()
   this->declare_parameter<double>("normal_length", 0.10);
   this->declare_parameter<std::string>("ground_normals_topic", "/ground_normals");
   this->declare_parameter<std::string>("nonground_normals_topic", "/nonground_normals");
+  this->declare_parameter<bool>("publish_ground_mesh", true);
+  this->declare_parameter<std::string>("ground_mesh_topic", "/ground_mesh");
+  this->declare_parameter<int>("mesh_smoothing_iterations", 2);
+  this->declare_parameter<double>("mesh_edge_height_threshold", 0.05);
+  this->declare_parameter<double>("mesh_alpha", 0.85);
+  this->declare_parameter<double>("mesh_marker_alpha", 0.85);
+  this->declare_parameter<double>("mesh_spike_height_threshold", 0.08);
+  this->declare_parameter<double>("mesh_max_triangle_height_step", 0.10);
   this->declare_parameter<bool>("timing_histogram_enabled", true);
   this->declare_parameter<int>("timing_histogram_window", 200);
   this->declare_parameter<int>("timing_histogram_report_every", 30);
@@ -570,6 +796,14 @@ GridGroundNode::RuntimeConfig GridGroundNode::get_runtime_config() const
   config.ground_components_keep = static_cast<int>(this->get_parameter("ground_components_keep").as_int());
   config.publish_normals_markers = this->get_parameter("publish_normals_markers").as_bool();
   config.normal_length = this->get_parameter("normal_length").as_double();
+  config.publish_ground_mesh = this->get_parameter("publish_ground_mesh").as_bool();
+  config.ground_mesh_topic = this->get_parameter("ground_mesh_topic").as_string();
+  config.mesh_smoothing_iterations = static_cast<int>(this->get_parameter("mesh_smoothing_iterations").as_int());
+  config.mesh_edge_height_threshold = this->get_parameter("mesh_edge_height_threshold").as_double();
+  config.mesh_alpha = this->get_parameter("mesh_alpha").as_double();
+  config.mesh_marker_alpha = this->get_parameter("mesh_marker_alpha").as_double();
+  config.mesh_spike_height_threshold = this->get_parameter("mesh_spike_height_threshold").as_double();
+  config.mesh_max_triangle_height_step = this->get_parameter("mesh_max_triangle_height_step").as_double();
   config.publish_raw_debug_cloud = this->get_parameter("publish_raw_debug_cloud").as_bool();
   config.raw_debug_max_points = static_cast<int>(this->get_parameter("raw_debug_max_points").as_int());
   config.verbose_debug_logs = this->get_parameter("verbose_debug_logs").as_bool();
@@ -780,6 +1014,9 @@ void GridGroundNode::handle_points(const PointCloud2::SharedPtr msg)
     }
 
     if (cells.empty()) {
+      if (config.publish_ground_mesh) {
+        ground_mesh_pub_->publish(create_delete_marker(msg->header, "ground_mesh", 0));
+      }
       if (config.verbose_debug_logs) {
         RCLCPP_WARN(
           this->get_logger(),
@@ -848,6 +1085,15 @@ void GridGroundNode::handle_points(const PointCloud2::SharedPtr msg)
     }
     if (!nonground_cells.empty()) {
       nonground_pub_->publish(create_plane_cloud(msg->header, nonground_cells));
+    }
+
+    if (config.publish_ground_mesh) {
+      const auto mesh_marker = create_ground_mesh_marker(msg->header, ground_cells, axis, config);
+      if (mesh_marker.has_value()) {
+        ground_mesh_pub_->publish(*mesh_marker);
+      } else {
+        ground_mesh_pub_->publish(create_delete_marker(msg->header, "ground_mesh", 0));
+      }
     }
 
     if (config.publish_normals_markers) {

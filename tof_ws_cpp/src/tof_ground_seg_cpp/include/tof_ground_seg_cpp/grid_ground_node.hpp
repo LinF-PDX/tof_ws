@@ -14,6 +14,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace tof_ground_seg_cpp
@@ -34,7 +35,6 @@ public:
   GridGroundNode();
   ~GridGroundNode() override;
 
-private:
   struct RuntimeConfig
   {
     std::string up_axis;
@@ -49,6 +49,14 @@ private:
     int ground_components_keep = 1;
     bool publish_normals_markers = true;
     double normal_length = 0.10;
+    bool publish_ground_mesh = true;
+    std::string ground_mesh_topic = "/ground_mesh";
+    int mesh_smoothing_iterations = 2;
+    double mesh_edge_height_threshold = 0.05;
+    double mesh_alpha = 0.85;
+    double mesh_marker_alpha = 0.85;
+    double mesh_spike_height_threshold = 0.08;
+    double mesh_max_triangle_height_step = 0.10;
     bool publish_raw_debug_cloud = false;
     int raw_debug_max_points = 20000;
     bool verbose_debug_logs = false;
@@ -65,6 +73,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr raw_debug_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr nonground_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr ground_mesh_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ground_normals_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr nonground_normals_pub_;
 
