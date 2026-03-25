@@ -145,3 +145,14 @@ C++ test:
 2. Terminal 2: play the bag
 3. Terminal 3: echo `/ground_grid_cells`
 4. Terminal 4: run the static transforms for RViz
+
+
+  ros2 run tof_ground_seg_cpp grid_ground_node --ros-args \
+    -p points_topic:=/my_blaze/pylon_ros2_camera_node/blaze_cloud \
+    -p mesh_smoothing_iterations:=2 \
+    -p mesh_edge_height_threshold:=0.05 \
+    -p mesh_spike_height_threshold:=0.02 \
+    -p mesh_max_triangle_height_step:=0.02
+
+codex resume 019d2182-a642-7120-af96-25c35afb92c3
+

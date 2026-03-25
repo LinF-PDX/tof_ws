@@ -58,6 +58,7 @@ struct VertexAccumulator
   double weighted_height_sum = 0.0;
   double weight_sum = 0.0;
   float confidence_sum = 0.0F;
+  std::vector<float> predicted_heights;
   float height = 0.0F;
   bool valid = false;
 };
@@ -514,6 +515,33 @@ Marker create_delete_marker(const std_msgs::msg::Header & header, const std::str
   return marker;
 }
 
+void append_oriented_triangle(
+  Marker & marker,
+  const AxisInfo & axis,
+  const Eigen::Vector3f & a,
+  const Eigen::Vector3f & b,
+  const Eigen::Vector3f & c)
+{
+  Eigen::Vector3f front_a = a;
+  Eigen::Vector3f front_b = b;
+  Eigen::Vector3f front_c = c;
+
+  const Eigen::Vector3f ab = b - a;
+  const Eigen::Vector3f ac = c - a;
+  const Eigen::Vector3f normal = ab.cross(ac);
+  if (normal[axis.up] < 0.0F) {
+    front_b = c;
+    front_c = b;
+  }
+
+  marker.points.push_back(to_geometry_point(front_a));
+  marker.points.push_back(to_geometry_point(front_b));
+  marker.points.push_back(to_geometry_point(front_c));
+
+  marker.points.push_back(to_geometry_point(front_a));
+  marker.points.push_back(to_geometry_point(front_c));
+  marker.points.push_back(to_geometry_point(front_b));
+}
 std::optional<Marker> create_ground_mesh_marker(
   const std_msgs::msg::Header & header,
   const std::vector<GridCellPlane> & ground_cells,
@@ -550,6 +578,7 @@ std::optional<Marker> create_ground_mesh_marker(
       vertex.weighted_height_sum += weight * static_cast<double>(*predicted);
       vertex.weight_sum += weight;
       vertex.confidence_sum += cell.confidence;
+      vertex.predicted_heights.push_back(*predicted);
       vertex.valid = true;
     }
   }
@@ -560,11 +589,20 @@ std::optional<Marker> create_ground_mesh_marker(
 
   for (auto & [corner, vertex] : vertices) {
     (void)corner;
-    if (!vertex.valid || vertex.weight_sum <= 0.0) {
+    if (!vertex.valid || vertex.weight_sum <= 0.0 || vertex.predicted_heights.empty()) {
       vertex.valid = false;
       continue;
     }
-    vertex.height = static_cast<float>(vertex.weighted_height_sum / vertex.weight_sum);
+
+    std::sort(vertex.predicted_heights.begin(), vertex.predicted_heights.end());
+    const std::size_t mid = vertex.predicted_heights.size() / 2U;
+    float median_height = vertex.predicted_heights[mid];
+    if (vertex.predicted_heights.size() % 2U == 0U) {
+      median_height = 0.5F * (vertex.predicted_heights[mid - 1U] + vertex.predicted_heights[mid]);
+    }
+
+    const float mean_height = static_cast<float>(vertex.weighted_height_sum / vertex.weight_sum);
+    vertex.height = static_cast<float>(0.75 * static_cast<double>(median_height) + 0.25 * static_cast<double>(mean_height));
     vertex.confidence_sum = std::clamp(vertex.confidence_sum / static_cast<float>(vertex.weight_sum), 0.0F, 1.0F);
   }
 
@@ -610,6 +648,48 @@ std::optional<Marker> create_ground_mesh_marker(
     }
   }
 
+  std::unordered_map<std::pair<int, int>, float, IntPairHash> corrected_heights;
+  corrected_heights.reserve(vertices.size());
+  for (const auto & [corner, vertex] : vertices) {
+    if (!vertex.valid) {
+      continue;
+    }
+
+    std::vector<float> neighbor_heights;
+    neighbor_heights.reserve(smooth_neighbors.size());
+    for (const auto & offset : smooth_neighbors) {
+      const auto it = vertices.find({corner.first + offset.first, corner.second + offset.second});
+      if (it == vertices.end() || !it->second.valid) {
+        continue;
+      }
+      neighbor_heights.push_back(it->second.height);
+    }
+
+    if (neighbor_heights.size() < 2U) {
+      continue;
+    }
+
+    std::sort(neighbor_heights.begin(), neighbor_heights.end());
+    const std::size_t mid = neighbor_heights.size() / 2U;
+    float neighbor_median = neighbor_heights[mid];
+    if (neighbor_heights.size() % 2U == 0U) {
+      neighbor_median = 0.5F * (neighbor_heights[mid - 1U] + neighbor_heights[mid]);
+    }
+
+    if (std::fabs(vertex.height - neighbor_median) <= static_cast<float>(config.mesh_spike_height_threshold)) {
+      continue;
+    }
+
+    corrected_heights.emplace(
+      corner,
+      static_cast<float>(0.35 * static_cast<double>(vertex.height) +
+      0.65 * static_cast<double>(neighbor_median)));
+  }
+
+  for (const auto & [corner, corrected_height] : corrected_heights) {
+    vertices[corner].height = corrected_height;
+  }
+
   auto make_vertex = [&](const std::pair<int, int> & corner) -> std::optional<MeshVertex> {
       const auto it = vertices.find(corner);
       if (it == vertices.end() || !it->second.valid) {
@@ -636,9 +716,9 @@ std::optional<Marker> create_ground_mesh_marker(
   marker.scale.x = 1.0;
   marker.scale.y = 1.0;
   marker.scale.z = 1.0;
-  marker.color.r = 0.15F;
-  marker.color.g = 0.75F;
-  marker.color.b = 0.25F;
+  marker.color.r = 0.60F;
+  marker.color.g = 0.95F;
+  marker.color.b = 0.60F;
   marker.color.a = static_cast<float>(std::clamp(config.mesh_marker_alpha, 0.05, 1.0));
   marker.points.reserve(ground_cells.size() * 6U);
 
@@ -651,23 +731,24 @@ std::optional<Marker> create_ground_mesh_marker(
       continue;
     }
 
+    const float edge_00_10 = std::fabs(v00->position[axis.up] - v10->position[axis.up]);
+    const float edge_10_11 = std::fabs(v10->position[axis.up] - v11->position[axis.up]);
+    const float edge_11_01 = std::fabs(v11->position[axis.up] - v01->position[axis.up]);
+    const float edge_01_00 = std::fabs(v01->position[axis.up] - v00->position[axis.up]);
+    const float max_edge_step = std::max(std::max(edge_00_10, edge_10_11), std::max(edge_11_01, edge_01_00));
+    if (max_edge_step > static_cast<float>(config.mesh_max_triangle_height_step)) {
+      continue;
+    }
+
     const float diag_a = std::fabs(v00->position[axis.up] - v11->position[axis.up]);
     const float diag_b = std::fabs(v10->position[axis.up] - v01->position[axis.up]);
 
     if (diag_a <= diag_b) {
-      marker.points.push_back(to_geometry_point(v00->position));
-      marker.points.push_back(to_geometry_point(v10->position));
-      marker.points.push_back(to_geometry_point(v11->position));
-      marker.points.push_back(to_geometry_point(v00->position));
-      marker.points.push_back(to_geometry_point(v11->position));
-      marker.points.push_back(to_geometry_point(v01->position));
+      append_oriented_triangle(marker, axis, v00->position, v10->position, v11->position);
+      append_oriented_triangle(marker, axis, v00->position, v11->position, v01->position);
     } else {
-      marker.points.push_back(to_geometry_point(v00->position));
-      marker.points.push_back(to_geometry_point(v10->position));
-      marker.points.push_back(to_geometry_point(v01->position));
-      marker.points.push_back(to_geometry_point(v10->position));
-      marker.points.push_back(to_geometry_point(v11->position));
-      marker.points.push_back(to_geometry_point(v01->position));
+      append_oriented_triangle(marker, axis, v00->position, v10->position, v01->position);
+      append_oriented_triangle(marker, axis, v10->position, v11->position, v01->position);
     }
   }
 
