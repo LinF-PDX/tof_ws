@@ -781,7 +781,7 @@ GridGroundNode::GridGroundNode()
   ground_normals_pub_ = this->create_publisher<MarkerArray>(ground_normals_topic, 10);
   nonground_normals_pub_ = this->create_publisher<MarkerArray>(nonground_normals_topic, 10);
   points_sub_ = this->create_subscription<PointCloud2>(
-    points_topic, 10,
+    points_topic, rclcpp::SensorDataQoS(),
     std::bind(&GridGroundNode::handle_points, this, std::placeholders::_1));
 
   timing_histogram_enabled_ = this->get_parameter("timing_histogram_enabled").as_bool();
